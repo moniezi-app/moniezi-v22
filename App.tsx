@@ -5563,46 +5563,47 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       })()}
 
       {showIosInstallHelp && !isRunningStandalone && (() => {
+        const isLight = theme !== 'dark';
         return (
-          <div className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/92 p-3 sm:p-4 animate-in fade-in duration-200 modal-overlay">
-            <div className="w-full max-w-md rounded-[26px] border border-sky-300/18 bg-slate-900 text-white shadow-[0_24px_64px_rgba(2,6,23,0.72)] overflow-hidden ring-1 ring-white/6">
-              <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between gap-3 bg-slate-900">
+          <div className={`fixed inset-0 z-[110] flex items-end justify-center p-3 sm:p-4 animate-in fade-in duration-200 modal-overlay ${isLight ? 'bg-slate-900/28 backdrop-blur-[3px]' : 'bg-slate-950/92'}`}>
+            <div className={`w-full max-w-md rounded-[26px] overflow-hidden ${isLight ? 'border border-sky-300/65 bg-gradient-to-br from-slate-50/98 via-white/98 to-sky-50/96 text-slate-900 shadow-[0_24px_64px_rgba(15,23,42,0.20)] ring-1 ring-sky-200/70' : 'border border-sky-300/18 bg-slate-900 text-white shadow-[0_24px_64px_rgba(2,6,23,0.72)] ring-1 ring-white/6'}`}>
+              <div className={`px-4 py-4 border-b flex items-center justify-between gap-3 ${isLight ? 'border-slate-200 bg-transparent' : 'border-white/10 bg-slate-900'}`}>
                 <div>
-                  <div className="text-[16px] font-bold leading-tight">Install MONIEZI on iPhone</div>
+                  <div className={`text-[16px] font-bold leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>Install MONIEZI on iPhone</div>
                 </div>
-                <button onClick={() => setShowIosInstallHelp(false)} className="p-2 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors" aria-label="Close install steps">
+                <button onClick={() => setShowIosInstallHelp(false)} className={`p-2 rounded-full transition-colors ${isLight ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-slate-800 hover:bg-slate-700 text-white'}`} aria-label="Close install steps">
                   <X size={18} />
                 </button>
               </div>
-              <div className="px-4 py-4 space-y-3 bg-slate-900">
-                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
+              <div className={`px-4 py-4 space-y-3 ${isLight ? 'bg-transparent' : 'bg-slate-900'}`}>
+                <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">1</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap the <span className="font-semibold text-white">three dots</span> in the <span className="font-semibold text-white">bottom-right corner</span> of Safari.</p>
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>1</div>
+                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>three dots</span> in the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>bottom-right corner</span> of Safari.</p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
+                <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">2</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap the <span className="font-semibold text-white">Share</span> button.</p>
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>2</div>
+                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Share</span> button.</p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
+                <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">3</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">View More</span> or scroll down to <span className="font-semibold text-white">Add to Home Screen</span>.</p>
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>3</div>
+                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>View More</span> or scroll down to <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add to Home Screen</span>.</p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
+                <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">4</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">Add to Home Screen</span>, then tap <span className="font-semibold text-white">Add</span>. MONIEZI will appear on your home screen like an app.</p>
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>4</div>
+                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add to Home Screen</span>, then tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add</span>. MONIEZI will appear on your home screen like an app.</p>
                   </div>
                 </div>
               </div>
-              <div className="px-4 pt-1 pb-3 bg-slate-900">
-                <div className="mb-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-[13px] leading-6 text-slate-100">
-                  <span className="font-semibold text-white">Next:</span> After MONIEZI is added to Home Screen, close Safari and open MONIEZI from your Home Screen icon.
+              <div className={`px-4 pt-1 pb-3 ${isLight ? 'bg-transparent' : 'bg-slate-900'}`}>
+                <div className={`mb-3 rounded-2xl px-3 py-3 text-[13px] leading-6 ${isLight ? 'border border-amber-300/60 bg-amber-50 text-slate-800' : 'border border-amber-400/20 bg-amber-500/10 text-slate-100'}`}>
+                  <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Next:</span> After MONIEZI is added to Home Screen, close Safari and open MONIEZI from your Home Screen icon.
                 </div>
                 <button onClick={() => setShowIosInstallHelp(false)} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-3 text-[15px] font-bold text-white transition-colors">Got it</button>
               </div>

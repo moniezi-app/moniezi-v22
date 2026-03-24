@@ -1219,7 +1219,7 @@ export default function App() {
   const [duplicationHistory, setDuplicationHistory] = useState<Record<string, {originalId: string, originalDate: string}>>({});
   
   // Settings Tab State
-  const [settingsTab, setSettingsTab] = useState<'backup' | 'branding' | 'tax' | 'data' | 'license'>('backup');
+  const [settingsTab, setSettingsTab] = useState<'backup' | 'branding' | 'tax' | 'data' | 'license' | 'offline'>('backup');
   const [expenseReceiptFilter, setExpenseReceiptFilter] = useState<'all' | 'with_receipts' | 'without_receipts'>('all');
   const [expenseReviewFilter, setExpenseReviewFilter] = useState<'all' | 'new' | 'reviewed'>('all');
 
@@ -5545,6 +5545,16 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             <div className={`rounded-[26px] border backdrop-blur-xl overflow-hidden ${theme === 'dark' ? 'border-sky-300/35 bg-gradient-to-br from-slate-800/98 via-slate-800/96 to-blue-950/92 shadow-[0_18px_48px_rgba(2,6,23,0.52)] ring-1 ring-white/8' : 'border-sky-300/65 bg-gradient-to-br from-slate-50/98 via-white/98 to-sky-50/96 shadow-[0_18px_48px_rgba(15,23,42,0.16)] ring-1 ring-sky-200/70'}`}>
               <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(96,165,250,0.20),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_32%)]" />
               <div className="relative px-4 py-4">
+                <button
+                  onClick={() => {
+                    setShowDeferredInstallCta(false);
+                    setShowIosInstallCta(false);
+                  }}
+                  className={`absolute right-3 top-3 z-10 p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-slate-800/90 hover:bg-slate-700 text-white/85' : 'bg-white/90 hover:bg-white text-slate-700 shadow-sm'}`}
+                  aria-label="Dismiss install banner"
+                >
+                  <X size={16} />
+                </button>
                 <div className="flex items-start gap-3.5">
                   <div className={`w-11 h-11 shrink-0 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-br from-sky-500/20 to-blue-600/10 border-sky-300/25' : 'bg-gradient-to-br from-sky-100 to-blue-50 border-sky-200/90 shadow-[0_8px_20px_rgba(59,130,246,0.12)]'}`}>
                     {isIosInstallBanner ? <Share2 size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} /> : <Download size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} />}
@@ -7054,7 +7064,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
               {/* Reports Menu (like Settings) */}
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm mb-4">
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                   <button
                     type="button"
                     onClick={() => scrollToReportSection('report-pl', 'pl')}
@@ -8753,32 +8763,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <div className="ml-auto text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">MONIEZI v{CUSTOMER_VERSION}</div>
             </div>
 
-            {/* Help */}
-            <button
-              onClick={openHelp}
-              className="w-full text-left bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 flex-shrink-0">
-                  <HelpCircle size={20} strokeWidth={1.5} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-col gap-0.5">
-                    <div className="text-lg font-extrabold tracking-wide text-yellow-400">OFFLINE</div>
-                    <div className="text-base font-semibold text-slate-950 dark:text-white">Offline setup</div>
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                    iPhone and Android instructions for offline mode, Airplane Mode, and first-time setup.
-                  </div>
-                </div>
-                <ChevronRight className="text-slate-400" size={18} />
-              </div>
-            </button>
-
-            
             {/* Tab Navigation */}
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm">
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                 <button
                   onClick={() => setSettingsTab('backup')}
                   className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
@@ -8839,12 +8826,46 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">License</span>
                 </button>
                 )}
+                <button
+                  onClick={() => setSettingsTab('offline')}
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wide transition-all ${
+                    settingsTab === 'offline'
+                      ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <HelpCircle size={18} />
+                  <span className="text-[10px] md:text-sm mt-0.5 md:mt-0">Offline</span>
+                </button>
               </div>
             </div>
 
             {/* Tab Content */}
             <div className="space-y-6">
               
+              {/* Offline Setup Tab */}
+              {settingsTab === 'offline' && (
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg animate-in fade-in slide-in-from-bottom-4">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                      <HelpCircle size={20} strokeWidth={2} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Offline Setup</h3>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+                    <p className="text-sm leading-7 text-slate-700 dark:text-slate-200">Use this section anytime you want to review how MONIEZI is installed for offline use on iPhone or Android.</p>
+                    <button
+                      onClick={openHelp}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-900/20 transition-colors"
+                    >
+                      <HelpCircle size={18} />
+                      Open Offline Setup
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Backup & Restore Tab */}
               {settingsTab === 'backup' && (
                 <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg animate-in fade-in slide-in-from-bottom-4">

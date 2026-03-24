@@ -5542,16 +5542,16 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
         return (
           <div className="absolute left-3 right-3 top-[max(76px,calc(env(safe-area-inset-top,0px)+72px))] z-[70] animate-in slide-in-from-top-2 duration-200">
-            <div className="rounded-[26px] border border-sky-300/35 bg-gradient-to-br from-slate-800/98 via-slate-800/96 to-blue-950/92 backdrop-blur-xl shadow-[0_18px_48px_rgba(2,6,23,0.52)] ring-1 ring-white/8 overflow-hidden">
+            <div className={`rounded-[26px] border backdrop-blur-xl overflow-hidden ${theme === 'dark' ? 'border-sky-300/35 bg-gradient-to-br from-slate-800/98 via-slate-800/96 to-blue-950/92 shadow-[0_18px_48px_rgba(2,6,23,0.52)] ring-1 ring-white/8' : 'border-sky-300/65 bg-gradient-to-br from-slate-50/98 via-white/98 to-sky-50/96 shadow-[0_18px_48px_rgba(15,23,42,0.16)] ring-1 ring-sky-200/70'}`}>
               <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(96,165,250,0.20),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_32%)]" />
               <div className="relative px-4 py-4">
                 <div className="flex items-start gap-3.5">
-                  <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-br from-sky-500/20 to-blue-600/10 border border-sky-300/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center">
-                    {isIosInstallBanner ? <Share2 size={19} className="text-sky-200" /> : <Download size={19} className="text-sky-200" />}
+                  <div className={`w-11 h-11 shrink-0 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-br from-sky-500/20 to-blue-600/10 border-sky-300/25' : 'bg-gradient-to-br from-sky-100 to-blue-50 border-sky-200/90 shadow-[0_8px_20px_rgba(59,130,246,0.12)]'}`}>
+                    {isIosInstallBanner ? <Share2 size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} /> : <Download size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[15px] font-bold text-white leading-tight">Install MONIEZI</div>
-                    <p className="text-[13px] leading-6 text-slate-200/90 mt-1 max-w-[38ch]">{bannerCopy}</p>
+                    <div className={`text-[15px] font-bold leading-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Install MONIEZI</div>
+                    <p className={`text-[13px] leading-6 mt-1 max-w-[38ch] ${theme === 'dark' ? 'text-slate-200/90' : 'text-slate-800'}`}>{bannerCopy}</p>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button onClick={isIosInstallBanner ? openIosInstallHelp : triggerDeferredInstallPrompt} className="min-w-[144px] px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-[15px] font-bold shadow-lg shadow-amber-950/30 transition-colors text-center">{primaryLabel}</button>
                       <button onClick={() => {
@@ -5569,44 +5569,50 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
       {showIosInstallHelp && !isRunningStandalone && (() => {
         const iosInstallContext = getIosInstallContext();
+        const iosHelpIntro = iosInstallContext.isSafariLike
+          ? "Use iPhone&apos;s Safari browser share option to save MONIEZI to your home screen."
+          : "Use your iPhone browser&apos;s share option to save MONIEZI to your home screen.";
+        const iosStepOne = iosInstallContext.isSafariLike
+          ? <>Tap the <span className="font-semibold text-white">Share</span> button in Safari.</>
+          : <>Tap the <span className="font-semibold text-white">three dots</span> in the browser, then tap the <span className="font-semibold text-white">Share</span> icon.</>;
         return (
-          <div className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/78 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200 modal-overlay">
-            <div className="w-full max-w-md rounded-[26px] border border-sky-300/20 bg-slate-900/98 text-white shadow-[0_22px_60px_rgba(2,6,23,0.58)] overflow-hidden">
-              <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between gap-3">
+          <div className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/92 p-3 sm:p-4 animate-in fade-in duration-200 modal-overlay">
+            <div className="w-full max-w-md rounded-[26px] border border-sky-300/18 bg-slate-900 text-white shadow-[0_24px_64px_rgba(2,6,23,0.72)] overflow-hidden ring-1 ring-white/6">
+              <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between gap-3 bg-slate-900">
                 <div>
                   <div className="text-[16px] font-bold leading-tight">Install MONIEZI on iPhone</div>
-                  <p className="mt-1 text-[12px] leading-5 text-slate-300">Use iPhone&apos;s share sheet to save MONIEZI to your home screen.</p>
+                  <p className="mt-1 text-[12px] leading-5 text-slate-200">{iosHelpIntro}</p>
                 </div>
-                <button onClick={() => setShowIosInstallHelp(false)} className="p-2 rounded-full bg-white/10 hover:bg-white/15 transition-colors" aria-label="Close install steps">
+                <button onClick={() => setShowIosInstallHelp(false)} className="p-2 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors" aria-label="Close install steps">
                   <X size={18} />
                 </button>
               </div>
-              <div className="px-4 py-4 space-y-3">
+              <div className="px-4 py-4 space-y-3 bg-slate-900">
                 {!iosInstallContext.isSafariLike && (
-                  <div className="rounded-2xl border border-amber-300/25 bg-amber-500/10 px-3 py-3 text-[13px] leading-6 text-amber-100">
-                    Open this page in <span className="font-semibold text-white">Safari</span> first for the best install experience on iPhone.
+                  <div className="rounded-2xl border border-amber-300/25 bg-amber-950 px-3 py-3 text-[13px] leading-6 text-amber-100">
+                    For the cleanest install flow on iPhone, open this page in <span className="font-semibold text-white">Safari</span> first.
                   </div>
                 )}
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">1</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap the <span className="font-semibold text-white">Share</span> button in the browser.</p>
+                    <p className="text-[14px] leading-6 text-slate-100">{iosStepOne}</p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">2</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Choose <span className="font-semibold text-white">Add to Home Screen</span>.</p>
+                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">View More</span> or scroll down to <span className="font-semibold text-white">Add to Home Screen</span>.</p>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">3</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">Add</span>. MONIEZI will appear on your home screen like an app.</p>
+                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">Add to Home Screen</span>, then tap <span className="font-semibold text-white">Add</span>. MONIEZI will appear on your home screen like an app.</p>
                   </div>
                 </div>
               </div>
-              <div className="px-4 pb-4 pt-1 flex gap-3">
+              <div className="px-4 pb-4 pt-1 flex gap-3 bg-slate-900">
                 <button onClick={() => setShowIosInstallHelp(false)} className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-3 text-[15px] font-bold text-white transition-colors">Got it</button>
               </div>
             </div>

@@ -1789,7 +1789,7 @@ export default function App() {
       setDeferredInstallPrompt(null);
       setShowDeferredInstallCta(false);
       setIsRunningStandalone(true);
-      showToast('MONIEZI installed successfully', 'success');
+      showToast('Installed. Open MONIEZI from your Home Screen.', 'success');
     };
 
     const onVisibility = () => evaluateStandaloneMode();
@@ -5533,7 +5533,6 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       {((showDeferredInstallCta && deferredInstallPrompt) || showIosInstallCta) && !isRunningStandalone && (() => {
         const iosInstallContext = getIosInstallContext();
         const isIosInstallBanner = showIosInstallCta && iosInstallContext.isIosDevice && !deferredInstallPrompt;
-        const primaryLabel = isIosInstallBanner ? 'Show steps' : 'Install now';
         const bannerCopy = isIosInstallBanner
           ? (iosInstallContext.isSafariLike
               ? 'Add MONIEZI to your iPhone home screen for faster access using Share and Add to Home Screen.'
@@ -5545,16 +5544,6 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             <div className={`rounded-[26px] border backdrop-blur-xl overflow-hidden ${theme === 'dark' ? 'border-sky-300/35 bg-gradient-to-br from-slate-800/98 via-slate-800/96 to-blue-950/92 shadow-[0_18px_48px_rgba(2,6,23,0.52)] ring-1 ring-white/8' : 'border-sky-300/65 bg-gradient-to-br from-slate-50/98 via-white/98 to-sky-50/96 shadow-[0_18px_48px_rgba(15,23,42,0.16)] ring-1 ring-sky-200/70'}`}>
               <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(96,165,250,0.20),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(125,211,252,0.10),transparent_32%)]" />
               <div className="relative px-4 py-4">
-                <button
-                  onClick={() => {
-                    setShowDeferredInstallCta(false);
-                    setShowIosInstallCta(false);
-                  }}
-                  className={`absolute right-3 top-3 z-10 p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-slate-800/90 hover:bg-slate-700 text-white/85' : 'bg-white/90 hover:bg-white text-slate-700 shadow-sm'}`}
-                  aria-label="Dismiss install banner"
-                >
-                  <X size={16} />
-                </button>
                 <div className="flex items-start gap-3.5">
                   <div className={`w-11 h-11 shrink-0 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-br from-sky-500/20 to-blue-600/10 border-sky-300/25' : 'bg-gradient-to-br from-sky-100 to-blue-50 border-sky-200/90 shadow-[0_8px_20px_rgba(59,130,246,0.12)]'}`}>
                     {isIosInstallBanner ? <Share2 size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} /> : <Download size={19} className={theme === 'dark' ? 'text-sky-200' : 'text-sky-500'} />}
@@ -5563,11 +5552,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     <div className={`text-[15px] font-bold leading-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Install MONIEZI</div>
                     <p className={`text-[13px] leading-6 mt-1 max-w-[38ch] ${theme === 'dark' ? 'text-slate-200/90' : 'text-slate-800'}`}>{bannerCopy}</p>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button onClick={isIosInstallBanner ? openIosInstallHelp : triggerDeferredInstallPrompt} className="min-w-[144px] px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-[15px] font-bold shadow-lg shadow-amber-950/30 transition-colors text-center">{primaryLabel}</button>
-                      <button onClick={() => {
-                        setShowDeferredInstallCta(false);
-                        setShowIosInstallCta(false);
-                      }} className="min-w-[144px] px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 border border-blue-400/25 text-white text-[15px] font-bold shadow-lg shadow-blue-950/30 transition-colors text-center">Later</button>
+                      <button onClick={isIosInstallBanner ? openIosInstallHelp : triggerDeferredInstallPrompt} className="min-w-[196px] px-5 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-[15px] font-bold shadow-lg shadow-amber-950/30 transition-colors text-center">Install MONIEZI</button>
                     </div>
                   </div>
                 </div>
@@ -5615,8 +5600,11 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   </div>
                 </div>
               </div>
-              <div className="px-4 pb-4 pt-1 flex gap-3 bg-slate-900">
-                <button onClick={() => setShowIosInstallHelp(false)} className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-3 text-[15px] font-bold text-white transition-colors">Got it</button>
+              <div className="px-4 pt-1 pb-3 bg-slate-900">
+                <div className="mb-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-[13px] leading-6 text-slate-100">
+                  <span className="font-semibold text-white">Next:</span> After MONIEZI is added to Home Screen, close Safari and open MONIEZI from your Home Screen icon.
+                </div>
+                <button onClick={() => setShowIosInstallHelp(false)} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-3 text-[15px] font-bold text-white transition-colors">Got it</button>
               </div>
             </div>
           </div>

@@ -5568,46 +5568,39 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       })()}
 
       {showIosInstallHelp && !isRunningStandalone && (() => {
-        const iosInstallContext = getIosInstallContext();
-        const iosHelpIntro = iosInstallContext.isSafariLike
-          ? "Use iPhone&apos;s Safari browser share option to save MONIEZI to your home screen."
-          : "Use your iPhone browser&apos;s share option to save MONIEZI to your home screen.";
-        const iosStepOne = iosInstallContext.isSafariLike
-          ? <>Tap the <span className="font-semibold text-white">Share</span> button in Safari.</>
-          : <>Tap the <span className="font-semibold text-white">three dots</span> in the browser, then tap the <span className="font-semibold text-white">Share</span> icon.</>;
         return (
           <div className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/92 p-3 sm:p-4 animate-in fade-in duration-200 modal-overlay">
             <div className="w-full max-w-md rounded-[26px] border border-sky-300/18 bg-slate-900 text-white shadow-[0_24px_64px_rgba(2,6,23,0.72)] overflow-hidden ring-1 ring-white/6">
               <div className="px-4 py-4 border-b border-white/10 flex items-center justify-between gap-3 bg-slate-900">
                 <div>
                   <div className="text-[16px] font-bold leading-tight">Install MONIEZI on iPhone</div>
-                  <p className="mt-1 text-[12px] leading-5 text-slate-200">{iosHelpIntro}</p>
                 </div>
                 <button onClick={() => setShowIosInstallHelp(false)} className="p-2 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors" aria-label="Close install steps">
                   <X size={18} />
                 </button>
               </div>
               <div className="px-4 py-4 space-y-3 bg-slate-900">
-                {!iosInstallContext.isSafariLike && (
-                  <div className="rounded-2xl border border-amber-300/25 bg-amber-950 px-3 py-3 text-[13px] leading-6 text-amber-100">
-                    For the cleanest install flow on iPhone, open this page in <span className="font-semibold text-white">Safari</span> first.
-                  </div>
-                )}
                 <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">1</div>
-                    <p className="text-[14px] leading-6 text-slate-100">{iosStepOne}</p>
+                    <p className="text-[14px] leading-6 text-slate-100">Tap the <span className="font-semibold text-white">three dots</span> in the <span className="font-semibold text-white">bottom-right corner</span> of Safari.</p>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">2</div>
-                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">View More</span> or scroll down to <span className="font-semibold text-white">Add to Home Screen</span>.</p>
+                    <p className="text-[14px] leading-6 text-slate-100">Tap the <span className="font-semibold text-white">Share</span> button.</p>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">3</div>
+                    <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">View More</span> or scroll down to <span className="font-semibold text-white">Add to Home Screen</span>.</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-700 bg-slate-800 px-3 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-[13px] font-bold text-sky-100">4</div>
                     <p className="text-[14px] leading-6 text-slate-100">Tap <span className="font-semibold text-white">Add to Home Screen</span>, then tap <span className="font-semibold text-white">Add</span>. MONIEZI will appear on your home screen like an app.</p>
                   </div>
                 </div>

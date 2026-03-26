@@ -7048,7 +7048,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 </table>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {currentPage === Page.Reports && (
@@ -8283,23 +8284,23 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
         )}
 
         {/* Pro P&L Preview Modal - OUTSIDE Reports conditional for proper rendering */}
-        {showProPLPreview && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-stretch justify-stretch p-0 modal-overlay">
-            <div className="bg-gray-100 w-full h-full overflow-hidden flex flex-col">
+        {showProPLPreview && createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-stretch justify-stretch p-0 modal-overlay" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            <div className="bg-gray-100 w-full h-full overflow-hidden flex flex-col overscroll-contain">
               {/* Modal Header */}
-              <div className="flex items-center justify-between px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:p-4 border-b border-gray-300 bg-white flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setShowProPLPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <div className="flex items-center justify-between px-3 pb-3 pt-3 sm:p-4 border-b border-gray-300 bg-white flex-shrink-0" style={{ minHeight: 'calc(60px + env(safe-area-inset-top, 0px))' }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <button onClick={() => setShowProPLPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                   </button>
                   <span className="font-bold text-sm text-gray-900">P&L Preview</span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={shareProPLPDF}
                     disabled={isGeneratingProPLPdf}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
                   >
                     {isGeneratingProPLPdf ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
                     <span>{isGeneratingProPLPdf ? 'Preparing...' : 'SHARE'}</span>
@@ -8307,7 +8308,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   <button
                     onClick={saveProPLPDF}
                     disabled={isGeneratingProPLPdf}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
                   >
                     {isGeneratingProPLPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                     <span>{isGeneratingProPLPdf ? 'Preparing...' : 'Download PDF'}</span>
@@ -8316,7 +8317,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               </div>
 
               {/* PDF Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div id="pro-pl-pdf-content" className="bg-white text-gray-900 rounded-lg shadow-lg mx-auto overflow-hidden" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', width: '700px', maxWidth: '100%' }}>
                   {/* Report Header - Left Aligned */}
                   <div className="px-5 py-5 border-b-2 border-gray-300 bg-gray-50">

@@ -902,6 +902,38 @@ export default function App() {
     [syncHashToState]
   );
 
+  const forceResetMainViewport = useCallback(() => {
+    const el = mainScrollRef.current;
+
+    const reset = () => {
+      try {
+        if (el) {
+          el.scrollTop = 0;
+          // iOS Safari can sometimes keep the old virtual scroll position until the next paint.
+          // Briefly toggling momentum scrolling forces a clean reflow for the new page.
+          // @ts-ignore
+          el.style.webkitOverflowScrolling = 'auto';
+          el.getBoundingClientRect();
+          // @ts-ignore
+          el.style.webkitOverflowScrolling = 'touch';
+          // @ts-ignore
+          if (typeof (el as any).scrollTo === 'function') (el as any).scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      } catch {
+        // ignore platform-specific scroll quirks
+      }
+    };
+
+    reset();
+    requestAnimationFrame(reset);
+    setTimeout(reset, 0);
+    setTimeout(reset, 80);
+    setTimeout(reset, 220);
+  }, []);
+
   const setCurrentPage = useCallback(
     (p: any, opts?: { replace?: boolean }) => {
       const nextPage = normalizePage(p);
@@ -911,6 +943,14 @@ export default function App() {
       const nextHash = buildHash(nextPath, {});
       const base = window.location.href.split('#')[0];
 
+      try {
+        (document.activeElement as HTMLElement | null)?.blur?.();
+      } catch {
+        // ignore
+      }
+
+      forceResetMainViewport();
+
       if (opts?.replace) {
         window.history.replaceState(null, '', base + nextHash);
         syncHashToState();
@@ -919,8 +959,9 @@ export default function App() {
       }
 
       _setCurrentPage(nextPage);
+      forceResetMainViewport();
     },
-    [syncHashToState]
+    [forceResetMainViewport, syncHashToState]
   );
   const [invoiceQuickFilter, setInvoiceQuickFilter] = useState<'all' | 'unpaid' | 'overdue'>('all');
   const [estimateQuickFilter, setEstimateQuickFilter] = useState<'all' | 'draft' | 'sent' | 'accepted' | 'declined'>('all');
@@ -1003,29 +1044,8 @@ export default function App() {
   // Some mobile browsers "remember" the scrollTop of the same scrolling container.
   // We enforce it (and re-enforce on the next tick) so each tab starts at the top.
   useLayoutEffect(() => {
-    const el = mainScrollRef.current;
-    if (!el) return;
-
-    const toTop = () => {
-      // Instant jump; keep it deterministic.
-      el.scrollTop = 0;
-
-      // Also reset the window scroll (some mobile browsers still use the page scroll).
-      try {
-        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-      } catch {
-        // ignore
-      }
-
-      // Also try the standards API on the container (some browsers behave better with scrollTo).
-      // @ts-ignore
-      if (typeof (el as any).scrollTo === "function") (el as any).scrollTo({ top: 0, left: 0, behavior: "auto" });
-    };
-
-    toTop();
-    requestAnimationFrame(toTop);
-    setTimeout(toTop, 0);
-  }, [currentPage]);
+    forceResetMainViewport();
+  }, [currentPage, forceResetMainViewport]);
 
   // Scroll-to-top button visibility
   // Listen on BOTH the internal scroll container AND window (belt-and-suspenders).
@@ -6105,7 +6125,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
         </div>
       </header>
 
-      <div ref={mainScrollRef} className="flex-1 min-h-0 overflow-y-auto px-6 md:px-8 no-print custom-scrollbar" style={{ paddingBottom: 'calc(11rem + env(safe-area-inset-bottom, 0px))' }} role="main">
+      <div key={`main-scroll-${currentPage}`} ref={mainScrollRef} className="flex-1 min-h-0 overflow-y-auto px-6 md:px-8 no-print custom-scrollbar" style={{ paddingBottom: 'calc(11rem + env(safe-area-inset-bottom, 0px))' }} role="main">
 
       <PageErrorBoundary key={currentPage} onReset={() => setCurrentPage(Page.Dashboard)}>
 

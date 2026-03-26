@@ -5579,24 +5579,18 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
                     <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>1</div>
-                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>three dots</span> in the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>bottom-right corner</span> of Safari.</p>
+                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>In <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Safari</span>, tap the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Share</span> button.</p>
                   </div>
                 </div>
                 <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
                     <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>2</div>
-                    <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap the <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Share</span> button.</p>
-                  </div>
-                </div>
-                <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>3</div>
                     <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>View More</span> or scroll down to <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add to Home Screen</span>.</p>
                   </div>
                 </div>
                 <div className={`rounded-2xl px-3 py-3 ${isLight ? 'border border-slate-200 bg-white/92 shadow-sm' : 'border border-slate-700 bg-slate-800'}`}>
                   <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>4</div>
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/20 text-sky-100'}`}>3</div>
                     <p className={`text-[14px] leading-6 ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>Tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add to Home Screen</span>, then tap <span className={`font-semibold ${isLight ? 'text-slate-950' : 'text-white'}`}>Add</span>. MONIEZI will appear on your home screen like an app.</p>
                   </div>
                 </div>

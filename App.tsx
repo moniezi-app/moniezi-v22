@@ -7050,8 +7050,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 </table>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )}
 
         {currentPage === Page.Reports && (

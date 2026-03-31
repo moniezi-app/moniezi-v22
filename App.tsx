@@ -1871,8 +1871,10 @@ export default function App() {
   }, [isEstimatePdfPreviewOpen, lockBodyScroll, unlockBodyScroll]);
 
   useEffect(() => {
-    if (showPLPreview || showProPLPreview) { lockBodyScroll(); return () => { unlockBodyScroll(); }; }
-  }, [showPLPreview, showProPLPreview, lockBodyScroll, unlockBodyScroll]);
+    // Keep the standard P&L preview body-locked, but do not body-lock the Pro P&L portal overlay.
+    // On iPhone/iOS, body position:fixed + portal-to-body can shift the overlay upward and hide its header.
+    if (showPLPreview) { lockBodyScroll(); return () => { unlockBodyScroll(); }; }
+  }, [showPLPreview, lockBodyScroll, unlockBodyScroll]);
 
   useEffect(() => {
     if (showHelpModal) { lockBodyScroll(); return () => { unlockBodyScroll(); }; }

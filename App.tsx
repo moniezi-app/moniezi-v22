@@ -4321,12 +4321,93 @@ const demoMileageTrips: MileageTrip[] = [
   };
 
   const handleExportTaxSummaryPDF = async () => {
-    const income = txForTaxYear.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const expenses = txForTaxYear.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const net = income - expenses;
+    const incomeTx = txForTaxYear.filter(t => t.type === 'income');
+    const expenseTx = txForTaxYear.filter(t => t.type === 'expense');
+    const totalIncome = incomeTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const totalExpenses = expenseTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const netProfit = totalIncome - totalExpenses;
+
     const rateCents = Number(settings.mileageRateCents ?? 72.5);
-    const miles = mileageForTaxYear.reduce((s, t) => s + Number(t.miles || 0), 0);
-    const mileageDeduction = miles * (rateCents / 100);
+    const mileageRate = rateCents / 100;
+    const totalMiles = mileageForTaxYear.reduce((sum, t) => sum + Number(t.miles || 0), 0);
+    const mileageDeduction = totalMiles * mileageRate;
+
+    const linkedReceiptExpenses = expenseTx.filter(t => !!(t as any).receiptId);
+    const missingReceiptCount = Math.max(expenseTx.length - linkedReceiptExpenses.length, 0);
+    const reviewedExpenseCount = expenseTx.filter(t => !!(t as any).reviewedAt).length;
+    const pendingReviewCount = Math.max(expenseTx.length - reviewedExpenseCount, 0);
+    const uncategorizedCount = txForTaxYear.filter(t => !String(t.category || '').trim()).length;
+    const incompleteMileageCount = mileageForTaxYear.filter(t => !String(t.purpose || '').trim() || Number(t.miles || 0) <= 0).length;
+    const completeMileageCount = Math.max(mileageForTaxYear.length - incompleteMileageCount, 0);
+
+    const receiptCoveragePct = expenseTx.length > 0 ? (linkedReceiptExpenses.length / expenseTx.length) * 100 : 100;
+    const reviewCoveragePct = expenseTx.length > 0 ? (reviewedExpenseCount / expenseTx.length) * 100 : 100;
+    const mileageCompletionPct = mileageForTaxYear.length > 0 ? (completeMileageCount / mileageForTaxYear.length) * 100 : 100;
+
+    const uniqueExpenseCategories = Array.from(new Set(
+      expenseTx
+        .map(t => String(t.category || '').trim())
+        .filter(Boolean)
+    ));
+
+    const datePool = [
+      ...txForTaxYear.map(t => String(t.date || '')).filter(Boolean),
+      ...mileageForTaxYear.map(t => String(t.date || '')).filter(Boolean)
+    ].sort();
+    const reportingStart = datePool[0] || `${taxPrepYear}-01-01`;
+    const reportingEnd = datePool[datePool.length - 1] || `${taxPrepYear}-12-31`;
+
+    const expenseCategoryMap = new Map<string, { amount: number; count: number; linked: number }>();
+    expenseTx.forEach(t => {
+      const rawCategory = String(t.category || '').trim();
+      const category = rawCategory || 'Uncategorized';
+      const current = expenseCategoryMap.get(category) || { amount: 0, count: 0, linked: 0 };
+      current.amount += Number(t.amount || 0);
+      current.count += 1;
+      if ((t as any).receiptId) current.linked += 1;
+      expenseCategoryMap.set(category, current);
+    });
+
+    const expenseCategories = Array.from(expenseCategoryMap.entries())
+      .map(([name, stats]) => ({ name, ...stats }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const topExpenseRows = expenseCategories.slice(0, 8);
+    if (expenseCategories.length > 8) {
+      const remainder = expenseCategories.slice(8).reduce((acc, item) => {
+        acc.amount += item.amount;
+        acc.count += item.count;
+        acc.linked += item.linked;
+        return acc;
+      }, { amount: 0, count: 0, linked: 0 });
+      if (remainder.count > 0) {
+        topExpenseRows.push({ name: 'Other recorded categories', ...remainder });
+      }
+    }
+
+    const quarterlyMileage = Array.from({ length: 4 }, (_, i) => ({
+      quarter: `Q${i + 1}`,
+      trips: 0,
+      miles: 0,
+      deduction: 0,
+    }));
+    mileageForTaxYear.forEach(t => {
+      const date = new Date(t.date);
+      const month = Number.isNaN(date.getTime()) ? 0 : date.getMonth();
+      const quarterIndex = Math.min(3, Math.max(0, Math.floor(month / 3)));
+      const miles = Number(t.miles || 0);
+      quarterlyMileage[quarterIndex].trips += 1;
+      quarterlyMileage[quarterIndex].miles += miles;
+      quarterlyMileage[quarterIndex].deduction += miles * mileageRate;
+    });
+
+    const topExpenseCategory = expenseCategories[0];
+    const attentionItems: string[] = [];
+    if (missingReceiptCount > 0) attentionItems.push(`Attach receipts to ${missingReceiptCount} expense ${missingReceiptCount === 1 ? 'item' : 'items'} to strengthen documentation coverage.`);
+    if (pendingReviewCount > 0) attentionItems.push(`Review ${pendingReviewCount} expense ${pendingReviewCount === 1 ? 'item' : 'items'} before handing records to your tax preparer.`);
+    if (uncategorizedCount > 0) attentionItems.push(`Assign categories to ${uncategorizedCount} uncategorized ${uncategorizedCount === 1 ? 'entry' : 'entries'} so deductions land in the right buckets.`);
+    if (incompleteMileageCount > 0) attentionItems.push(`Complete purpose or mileage details on ${incompleteMileageCount} mileage ${incompleteMileageCount === 1 ? 'trip' : 'trips'}.`);
+    if (!attentionItems.length) attentionItems.push('No major data gaps were detected in this tax-prep package.');
 
     const esc = (value: string) => value
       .replace(/&/g, '&amp;')
@@ -4335,15 +4416,96 @@ const demoMileageTrips: MileageTrip[] = [
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
-    const businessName = esc(String(settings.businessName || '—'));
-    const ownerName = esc(String(settings.ownerName || '—'));
-    const currencySymbol = esc(String(settings.currencySymbol || '$'));
+    const formatMoney = (value: number) => `${esc(String(settings.currencySymbol || '$'))}${esc(Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}`;
+    const formatNumber = (value: number, decimals = 0) => esc(Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+    const formatPercent = (value: number) => `${formatNumber(value, value % 1 === 0 ? 0 : 1)}%`;
+    const formatDate = (value: string) => {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return esc(value);
+      return esc(d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }));
+    };
+
+    const progressTone = (value: number) => {
+      if (value >= 90) return { pill: '#dcfce7', text: '#166534', bar: '#22c55e', track: '#dcfce7' };
+      if (value >= 70) return { pill: '#dbeafe', text: '#1d4ed8', bar: '#2563eb', track: '#dbeafe' };
+      if (value >= 40) return { pill: '#fef3c7', text: '#b45309', bar: '#f59e0b', track: '#fde68a' };
+      return { pill: '#fee2e2', text: '#b91c1c', bar: '#ef4444', track: '#fecaca' };
+    };
+
+    const docRows = [
+      {
+        label: 'Receipt Coverage',
+        value: receiptCoveragePct,
+        detail: `${linkedReceiptExpenses.length} linked receipts across ${expenseTx.length} deductible expense ${expenseTx.length === 1 ? 'item' : 'items'}.`,
+      },
+      {
+        label: 'Expense Review Status',
+        value: reviewCoveragePct,
+        detail: `${reviewedExpenseCount} reviewed · ${pendingReviewCount} pending review.`,
+      },
+      {
+        label: 'Mileage Log Completeness',
+        value: mileageCompletionPct,
+        detail: `${completeMileageCount} complete trip ${completeMileageCount === 1 ? 'entry' : 'entries'} recorded for ${formatNumber(totalMiles, 1)} business miles.`,
+      },
+    ];
+
+    const documentationRowsHtml = docRows.map(row => {
+      const tone = progressTone(row.value);
+      return `
+        <div class="progress-row">
+          <div class="progress-header">
+            <div>
+              <div class="progress-label">${esc(row.label)}</div>
+              <div class="progress-detail">${esc(row.detail)}</div>
+            </div>
+            <div class="progress-pill" style="background:${tone.pill}; color:${tone.text};">${formatPercent(row.value)}</div>
+          </div>
+          <div class="progress-track" style="background:${tone.track};">
+            <div class="progress-bar" style="width:${Math.max(6, Math.min(100, row.value))}%; background:${tone.bar};"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const expenseRowsHtml = topExpenseRows.length
+      ? topExpenseRows.map(item => {
+          const share = totalExpenses > 0 ? (item.amount / totalExpenses) * 100 : 0;
+          const coverage = item.count > 0 ? (item.linked / item.count) * 100 : 0;
+          return `
+            <tr>
+              <td>${esc(item.name)}</td>
+              <td class="num">${formatMoney(item.amount)}</td>
+              <td class="num">${formatPercent(share)}</td>
+              <td class="num">${item.linked}/${item.count}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="4" class="empty-state">No deductible expenses were recorded for this tax year.</td></tr>';
+
+    const mileageRowsHtml = mileageForTaxYear.length
+      ? quarterlyMileage.map(row => `
+          <tr>
+            <td>${esc(row.quarter)}</td>
+            <td class="num">${formatNumber(row.trips)}</td>
+            <td class="num">${formatNumber(row.miles, 1)}</td>
+            <td class="num">${formatMoney(row.deduction)}</td>
+          </tr>
+        `).join('')
+      : '<tr><td colspan="4" class="empty-state">No mileage trips were recorded for this tax year.</td></tr>';
+
+    const attentionHtml = attentionItems.map(item => `<li>${esc(item)}</li>`).join('');
+
+    const generatedDate = new Date();
+    const generatedDateLabel = esc(generatedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }));
+    const generatedTimeLabel = esc(generatedDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }));
     const filename = `MONIEZI_TaxSummary_${taxPrepYear}.pdf`;
 
     const pdfMarginMm = 10;
     const a4WidthPx = Math.round((210 / 25.4) * 96);
+    const a4HeightPx = Math.round((297 / 25.4) * 96);
     const contentWidthPx = Math.floor(((210 - (pdfMarginMm * 2)) / 210) * a4WidthPx);
-    const contentPaddingPx = 28;
+    const contentHeightPx = Math.floor(((297 - (pdfMarginMm * 2)) / 297) * a4HeightPx);
 
     const wrapper = document.createElement('div');
     wrapper.setAttribute('aria-hidden', 'true');
@@ -4357,43 +4519,593 @@ const demoMileageTrips: MileageTrip[] = [
     wrapper.style.zIndex = '-1';
     wrapper.style.background = '#ffffff';
     wrapper.style.overflow = 'visible';
+
     wrapper.innerHTML = `
-      <div style="font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; width: ${contentWidthPx}px; padding: ${contentPaddingPx}px; color: #111827; background: #ffffff;">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 24px;">
-          <div style="flex: 1 1 auto; min-width: 0;">
-            <div style="font-size: 28px; font-weight: 700; margin: 0 0 8px 0;">MONIEZI</div>
-            <div style="font-size: 22px; font-weight: 700; margin: 0 0 8px 0;">Tax Summary ${taxPrepYear}</div>
-            <div style="font-size: 13px; color:#4b5563;">Business: ${businessName}</div>
-            <div style="font-size: 13px; color:#4b5563; margin-top:4px;">Owner: ${ownerName}</div>
+      <style>
+        .tax-export-root, .tax-export-root * { box-sizing: border-box; }
+        .tax-export-root {
+          width: ${contentWidthPx}px;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #0f172a;
+          background: #ffffff;
+        }
+        .tax-page {
+          width: ${contentWidthPx}px;
+          min-height: ${contentHeightPx}px;
+          padding: 28px;
+          background: #ffffff;
+          position: relative;
+        }
+        .tax-page + .tax-page {
+          page-break-before: always;
+        }
+        .brand-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+        .brand-kicker {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #2563eb;
+          margin-bottom: 10px;
+        }
+        .brand-title {
+          font-size: 32px;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          margin: 0;
+        }
+        .report-title {
+          font-size: 24px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          margin: 8px 0 8px;
+        }
+        .report-subtitle {
+          font-size: 13px;
+          line-height: 1.55;
+          color: #475569;
+          max-width: 480px;
+        }
+        .meta-chip-wrap {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          max-width: 290px;
+        }
+        .meta-chip {
+          min-width: 132px;
+          border: 1px solid #dbeafe;
+          background: #eff6ff;
+          border-radius: 12px;
+          padding: 10px 12px;
+        }
+        .meta-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          color: #64748b;
+          margin-bottom: 6px;
+          font-weight: 700;
+        }
+        .meta-value {
+          font-size: 13px;
+          color: #0f172a;
+          font-weight: 700;
+          line-height: 1.35;
+          overflow-wrap: anywhere;
+        }
+        .summary-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+          margin: 18px 0 20px;
+        }
+        .summary-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 14px;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .summary-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          color: #64748b;
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .summary-value {
+          font-size: 22px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          color: #0f172a;
+          line-height: 1.1;
+          white-space: nowrap;
+        }
+        .summary-detail {
+          font-size: 11px;
+          line-height: 1.45;
+          color: #64748b;
+          margin-top: 8px;
+        }
+        .section {
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          background: #ffffff;
+          margin-bottom: 16px;
+          overflow: hidden;
+        }
+        .section-header {
+          padding: 14px 16px 12px;
+          border-bottom: 1px solid #e2e8f0;
+          background: #f8fafc;
+        }
+        .section-kicker {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          color: #2563eb;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .section-title {
+          font-size: 17px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          margin: 0 0 4px;
+        }
+        .section-subtitle {
+          font-size: 12px;
+          line-height: 1.5;
+          color: #475569;
+        }
+        .section-body {
+          padding: 16px;
+        }
+        table.report-table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+        table.report-table th,
+        table.report-table td {
+          border-bottom: 1px solid #e2e8f0;
+          padding: 11px 12px;
+          font-size: 13px;
+          vertical-align: top;
+          overflow-wrap: anywhere;
+        }
+        table.report-table th {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #64748b;
+          text-align: left;
+          background: #f8fafc;
+          font-weight: 700;
+        }
+        table.report-table td.num,
+        table.report-table th.num {
+          text-align: right;
+          white-space: nowrap;
+        }
+        table.report-table tr:last-child td {
+          border-bottom: none;
+        }
+        .snapshot-key {
+          color: #334155;
+          font-weight: 700;
+        }
+        .snapshot-note {
+          color: #64748b;
+          font-size: 11px;
+          margin-top: 4px;
+          line-height: 1.45;
+        }
+        .emphasis-row td {
+          font-weight: 800;
+          color: #0f172a;
+          background: #eff6ff;
+        }
+        .progress-row + .progress-row {
+          margin-top: 14px;
+        }
+        .progress-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+        .progress-label {
+          font-size: 13px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 3px;
+        }
+        .progress-detail {
+          font-size: 11px;
+          line-height: 1.45;
+          color: #64748b;
+        }
+        .progress-pill {
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+        .progress-track {
+          width: 100%;
+          height: 10px;
+          border-radius: 999px;
+          overflow: hidden;
+        }
+        .progress-bar {
+          height: 100%;
+          border-radius: 999px;
+        }
+        .coverage-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+        }
+        .coverage-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 13px;
+          background: #f8fafc;
+        }
+        .coverage-card-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #64748b;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .coverage-card-value {
+          font-size: 24px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          color: #0f172a;
+        }
+        .coverage-card-note {
+          font-size: 11px;
+          line-height: 1.45;
+          color: #64748b;
+          margin-top: 6px;
+        }
+        .split-grid {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr;
+          gap: 16px;
+        }
+        .attention-list {
+          margin: 0;
+          padding-left: 18px;
+        }
+        .attention-list li {
+          margin-bottom: 10px;
+          font-size: 12px;
+          line-height: 1.5;
+          color: #334155;
+        }
+        .attention-list li:last-child {
+          margin-bottom: 0;
+        }
+        .footer-note {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid #e2e8f0;
+          font-size: 11px;
+          line-height: 1.45;
+          color: #64748b;
+        }
+        .footer-note strong {
+          color: #0f172a;
+        }
+        .empty-state {
+          text-align: left;
+          color: #64748b;
+          font-style: italic;
+          padding: 16px 12px !important;
+        }
+      </style>
+      <div class="tax-export-root">
+        <div class="tax-page">
+          <div class="brand-row">
+            <div>
+              <div class="brand-kicker">MONIEZI Pro Finance</div>
+              <h1 class="brand-title">MONIEZI</h1>
+              <div class="report-title">Tax Prep Package Summary ${esc(String(taxPrepYear))}</div>
+              <div class="report-subtitle">Year-end financial totals, documentation status, and mileage records prepared from your MONIEZI business data for accountant review and filing prep.</div>
+            </div>
+            <div class="meta-chip-wrap">
+              <div class="meta-chip">
+                <div class="meta-label">Business</div>
+                <div class="meta-value">${esc(String(settings.businessName || 'Not set'))}</div>
+              </div>
+              <div class="meta-chip">
+                <div class="meta-label">Owner</div>
+                <div class="meta-value">${esc(String(settings.ownerName || 'Not set'))}</div>
+              </div>
+              <div class="meta-chip">
+                <div class="meta-label">Generated</div>
+                <div class="meta-value">${generatedDateLabel}<br />${generatedTimeLabel}</div>
+              </div>
+              <div class="meta-chip">
+                <div class="meta-label">Reporting Period</div>
+                <div class="meta-value">${formatDate(reportingStart)} – ${formatDate(reportingEnd)}</div>
+              </div>
+            </div>
           </div>
-          <div style="flex: 0 0 170px; max-width: 170px; text-align:right; font-size: 12px; color:#6b7280; line-height:1.4; word-break: break-word;">Generated ${esc(new Date().toLocaleString())}</div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-label">Gross Business Income</div>
+              <div class="summary-value">${formatMoney(totalIncome)}</div>
+              <div class="summary-detail">All income transactions recorded in MONIEZI for ${esc(String(taxPrepYear))}.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Deductible Expenses</div>
+              <div class="summary-value">${formatMoney(totalExpenses)}</div>
+              <div class="summary-detail">Across ${formatNumber(expenseTx.length)} expense ${expenseTx.length === 1 ? 'entry' : 'entries'} in this package.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Net Business Profit</div>
+              <div class="summary-value">${formatMoney(netProfit)}</div>
+              <div class="summary-detail">Before any final tax adjustments handled outside this report.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Mileage Deduction</div>
+              <div class="summary-value">${formatMoney(mileageDeduction)}</div>
+              <div class="summary-detail">${formatNumber(totalMiles, 1)} business miles at ${formatMoney(mileageRate)} per mile.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Ledger Transactions</div>
+              <div class="summary-value">${formatNumber(txForTaxYear.length)}</div>
+              <div class="summary-detail">Income and expense entries included in this year-end package.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Linked Receipts</div>
+              <div class="summary-value">${formatNumber(linkedReceiptExpenses.length)}</div>
+              <div class="summary-detail">Receipt-backed expenses currently attached inside MONIEZI.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Expense Categories</div>
+              <div class="summary-value">${formatNumber(uniqueExpenseCategories.length)}</div>
+              <div class="summary-detail">Distinct deduction buckets used in this tax year.</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Top Expense Category</div>
+              <div class="summary-value" style="font-size:18px; white-space:normal; line-height:1.2;">${esc(topExpenseCategory?.name || 'No expenses recorded')}</div>
+              <div class="summary-detail">${topExpenseCategory ? `${formatMoney(topExpenseCategory.amount)} · ${formatPercent(totalExpenses > 0 ? (topExpenseCategory.amount / totalExpenses) * 100 : 0)} of expenses` : 'No deductible expense data available.'}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <div class="section-kicker">Section 1</div>
+              <div class="section-title">Tax-Ready Financial Snapshot</div>
+              <div class="section-subtitle">Core totals your accountant typically needs first, presented in one clean year-end view.</div>
+            </div>
+            <div class="section-body" style="padding:0;">
+              <table class="report-table">
+                <colgroup>
+                  <col style="width:56%;" />
+                  <col style="width:44%;" />
+                </colgroup>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Gross Business Income</div>
+                      <div class="snapshot-note">Total recorded income transactions for the selected tax year.</div>
+                    </td>
+                    <td class="num">${formatMoney(totalIncome)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Deductible Business Expenses</div>
+                      <div class="snapshot-note">Total expense entries tracked in MONIEZI before any external adjustments.</div>
+                    </td>
+                    <td class="num">${formatMoney(totalExpenses)}</td>
+                  </tr>
+                  <tr class="emphasis-row">
+                    <td>
+                      <div class="snapshot-key">Net Business Profit</div>
+                      <div class="snapshot-note">Income less recorded expenses for the selected period.</div>
+                    </td>
+                    <td class="num">${formatMoney(netProfit)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Business Mileage Logged</div>
+                      <div class="snapshot-note">${formatNumber(mileageForTaxYear.length)} trip ${mileageForTaxYear.length === 1 ? 'entry' : 'entries'} captured in the mileage log.</div>
+                    </td>
+                    <td class="num">${formatNumber(totalMiles, 1)} mi</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Standard Mileage Rate Used</div>
+                      <div class="snapshot-note">Configured inside MONIEZI settings for the selected export.</div>
+                    </td>
+                    <td class="num">${formatMoney(mileageRate)} / mi</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Estimated Mileage Deduction</div>
+                      <div class="snapshot-note">Computed from logged business miles using the configured rate.</div>
+                    </td>
+                    <td class="num">${formatMoney(mileageDeduction)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="snapshot-key">Reporting Period</div>
+                      <div class="snapshot-note">Earliest to latest record included in this export package.</div>
+                    </td>
+                    <td class="num">${formatDate(reportingStart)} – ${formatDate(reportingEnd)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <div class="section-kicker">Section 2</div>
+              <div class="section-title">Audit Readiness & Documentation Status</div>
+              <div class="section-subtitle">A quick view of how complete and organized your records look before filing.</div>
+            </div>
+            <div class="section-body">
+              ${documentationRowsHtml}
+            </div>
+          </div>
+
+          <div class="coverage-grid">
+            <div class="coverage-card">
+              <div class="coverage-card-label">Package Coverage</div>
+              <div class="coverage-card-value">${formatNumber(txForTaxYear.length)}</div>
+              <div class="coverage-card-note">Total ledger transactions included in this tax-prep package export.</div>
+            </div>
+            <div class="coverage-card">
+              <div class="coverage-card-label">Items Requiring Attention</div>
+              <div class="coverage-card-value">${formatNumber(missingReceiptCount + pendingReviewCount + uncategorizedCount + incompleteMileageCount)}</div>
+              <div class="coverage-card-note">Combined open items across receipts, review status, categorization, and mileage completeness.</div>
+            </div>
+            <div class="coverage-card">
+              <div class="coverage-card-label">Prepared Privately</div>
+              <div class="coverage-card-value">100%</div>
+              <div class="coverage-card-note">Generated directly from your MONIEZI records for local export and review.</div>
+            </div>
+          </div>
+
+          <div class="footer-note">
+            <div><strong>Prepared with MONIEZI Pro Finance.</strong> This summary is designed to help organize year-end records before filing.</div>
+            <div>Review final tax treatment with your CPA or tax professional.</div>
+          </div>
         </div>
 
-        <table style="width:100%; border-collapse: collapse; font-size: 14px; table-layout: fixed;">
-          <colgroup>
-            <col style="width: 62%;" />
-            <col style="width: 38%;" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th style="text-align:left; padding:12px; border:1px solid #d1d5db; background:#f3f4f6;">Category</th>
-              <th style="text-align:right; padding:12px; border:1px solid #d1d5db; background:#f3f4f6;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Income</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${income.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Expenses</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${expenses.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db; font-weight:700;">Net Profit</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; font-weight:700; white-space:nowrap;">${currencySymbol}${net.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Miles</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${miles.toFixed(1)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Deduction</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${mileageDeduction.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Rate</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${(rateCents / 100).toFixed(3)} / mi</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Ledger Transactions</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${txForTaxYear.length}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Trips</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${mileageForTaxYear.length}</td></tr>
-          </tbody>
-        </table>
+        <div class="tax-page">
+          <div class="brand-row" style="margin-bottom:16px;">
+            <div>
+              <div class="brand-kicker">MONIEZI Tax Prep Package</div>
+              <div class="report-title" style="margin-top:0;">Detailed Breakdown & Filing Checks</div>
+              <div class="report-subtitle">The sections below show where expenses were concentrated, how mileage was logged, and what should be cleaned up before filing.</div>
+            </div>
+            <div class="meta-chip-wrap" style="max-width:240px;">
+              <div class="meta-chip" style="min-width: 112px;">
+                <div class="meta-label">Tax Year</div>
+                <div class="meta-value">${esc(String(taxPrepYear))}</div>
+              </div>
+              <div class="meta-chip" style="min-width: 112px;">
+                <div class="meta-label">Expense Categories</div>
+                <div class="meta-value">${formatNumber(uniqueExpenseCategories.length)}</div>
+              </div>
+            </div>
+          </div>
 
-        <div style="margin-top: 18px; font-size: 12px; color:#6b7280; line-height:1.5;">
-          For planning only. Review this summary with your tax professional before filing.
+          <div class="section">
+            <div class="section-header">
+              <div class="section-kicker">Section 3</div>
+              <div class="section-title">Deductible Expense Breakdown</div>
+              <div class="section-subtitle">Top expense categories by dollar amount, including category share and receipt-backed count.</div>
+            </div>
+            <div class="section-body" style="padding:0;">
+              <table class="report-table">
+                <colgroup>
+                  <col style="width:40%;" />
+                  <col style="width:24%;" />
+                  <col style="width:16%;" />
+                  <col style="width:20%;" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Expense Category</th>
+                    <th class="num">Amount</th>
+                    <th class="num">Share</th>
+                    <th class="num">Receipts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${expenseRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div class="section" style="margin-bottom:0;">
+              <div class="section-header">
+                <div class="section-kicker">Section 4</div>
+                <div class="section-title">Mileage Log Summary</div>
+                <div class="section-subtitle">Quarter-by-quarter view of recorded trips, miles, and estimated deduction.</div>
+              </div>
+              <div class="section-body" style="padding:0;">
+                <table class="report-table">
+                  <colgroup>
+                    <col style="width:22%;" />
+                    <col style="width:18%;" />
+                    <col style="width:28%;" />
+                    <col style="width:32%;" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Quarter</th>
+                      <th class="num">Trips</th>
+                      <th class="num">Miles</th>
+                      <th class="num">Deduction</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${mileageRowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="section" style="margin-bottom:0;">
+              <div class="section-header">
+                <div class="section-kicker">Section 5</div>
+                <div class="section-title">Attention Items Before Filing</div>
+                <div class="section-subtitle">The items below help explain where additional cleanup or support documents may still be needed.</div>
+              </div>
+              <div class="section-body">
+                <ul class="attention-list">
+                  ${attentionHtml}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="section" style="margin-top:16px; margin-bottom:0;">
+            <div class="section-header">
+              <div class="section-kicker">Section 6</div>
+              <div class="section-title">Pre-Filing Note</div>
+              <div class="section-subtitle">Use this package as a premium handoff document for planning, bookkeeping review, and tax-prep discussion.</div>
+            </div>
+            <div class="section-body">
+              <div style="font-size:12px; line-height:1.65; color:#475569;">
+                MONIEZI organized this package from your recorded ledger entries, linked receipt attachments, and mileage logs for the selected tax year. The totals here are designed to make the value of your records immediately clear: what you earned, what you spent, how well expenses are documented, and what should be addressed before filing. Final tax treatment, classification decisions, and any required adjustments should still be reviewed with your tax professional.
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-note">
+            <div><strong>MONIEZI Pro Finance</strong> · Generated privately from your local business records.</div>
+            <div>${esc(String(settings.businessName || 'Business'))} · Tax Year ${esc(String(taxPrepYear))}</div>
+          </div>
         </div>
       </div>
     `;
@@ -4403,8 +5115,8 @@ const demoMileageTrips: MileageTrip[] = [
     try {
       await new Promise(resolve => requestAnimationFrame(() => resolve(true)));
 
-      const element = wrapper.firstElementChild as HTMLElement | null;
-      if (!element) throw new Error('Tax summary element not found');
+      const element = wrapper.querySelector('.tax-export-root') as HTMLElement | null;
+      if (!element) throw new Error('Tax summary export root not found');
 
       const opt = {
         margin: [pdfMarginMm, pdfMarginMm, pdfMarginMm, pdfMarginMm],
@@ -4433,6 +5145,7 @@ const demoMileageTrips: MileageTrip[] = [
       if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
     }
   };
+
 
 
   const prepareProfitLossPdfClone = (source: HTMLElement) => {

@@ -4328,35 +4328,101 @@ const demoMileageTrips: MileageTrip[] = [
     const miles = mileageForTaxYear.reduce((s, t) => s + Number(t.miles || 0), 0);
     const mileageDeduction = miles * (rateCents / 100);
 
+    const esc = (value: string) => value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const businessName = esc(String(settings.businessName || '—'));
+    const ownerName = esc(String(settings.ownerName || '—'));
+    const currencySymbol = esc(String(settings.currencySymbol || '$'));
+    const filename = `MONIEZI_TaxSummary_${taxPrepYear}.pdf`;
+
     const wrapper = document.createElement('div');
+    wrapper.setAttribute('aria-hidden', 'true');
     wrapper.style.position = 'fixed';
-    wrapper.style.left = '-9999px';
+    wrapper.style.left = '0';
     wrapper.style.top = '0';
+    wrapper.style.width = '794px';
+    wrapper.style.minHeight = '1123px';
+    wrapper.style.padding = '0';
+    wrapper.style.margin = '0';
+    wrapper.style.opacity = '0.01';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.overflow = 'hidden';
     wrapper.innerHTML = `
-      <div style="font-family: Arial, sans-serif; padding: 24px;">
-        <h2 style="margin:0 0 8px 0;">MONIEZI — Tax Summary (${taxPrepYear})</h2>
-        <div style="margin-bottom: 16px; color:#444;">Business: ${settings.businessName || '—'} | Owner: ${settings.ownerName || '—'}</div>
-        <table style="width:100%; border-collapse: collapse;">
-          <tr><td style="padding:8px; border:1px solid #ddd;">Total Income</td><td style="padding:8px; border:1px solid #ddd; text-align:right;">${settings.currencySymbol}${income.toFixed(2)}</td></tr>
-          <tr><td style="padding:8px; border:1px solid #ddd;">Total Expenses</td><td style="padding:8px; border:1px solid #ddd; text-align:right;">${settings.currencySymbol}${expenses.toFixed(2)}</td></tr>
-          <tr><td style="padding:8px; border:1px solid #ddd; font-weight:bold;">Net Profit</td><td style="padding:8px; border:1px solid #ddd; text-align:right; font-weight:bold;">${settings.currencySymbol}${net.toFixed(2)}</td></tr>
-          <tr><td style="padding:8px; border:1px solid #ddd;">Mileage Miles</td><td style="padding:8px; border:1px solid #ddd; text-align:right;">${miles.toFixed(1)}</td></tr>
-          <tr><td style="padding:8px; border:1px solid #ddd;">Mileage Deduction</td><td style="padding:8px; border:1px solid #ddd; text-align:right;">${settings.currencySymbol}${mileageDeduction.toFixed(2)} (at ${(rateCents/100).toFixed(3)}/mi)</td></tr>
+      <div style="font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; width: 794px; min-height: 1123px; padding: 40px; color: #111827; background: #ffffff;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 24px;">
+          <div>
+            <div style="font-size: 28px; font-weight: 700; margin: 0 0 8px 0;">MONIEZI</div>
+            <div style="font-size: 22px; font-weight: 700; margin: 0 0 8px 0;">Tax Summary ${taxPrepYear}</div>
+            <div style="font-size: 13px; color:#4b5563;">Business: ${businessName}</div>
+            <div style="font-size: 13px; color:#4b5563; margin-top:4px;">Owner: ${ownerName}</div>
+          </div>
+          <div style="text-align:right; font-size: 12px; color:#6b7280;">Generated ${esc(new Date().toLocaleString())}</div>
+        </div>
+
+        <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:12px; border:1px solid #d1d5db; background:#f3f4f6;">Category</th>
+              <th style="text-align:right; padding:12px; border:1px solid #d1d5db; background:#f3f4f6;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Income</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${income.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Expenses</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${expenses.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db; font-weight:700;">Net Profit</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; font-weight:700;">${currencySymbol}${net.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Miles</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${miles.toFixed(1)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Deduction</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${mileageDeduction.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Rate</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${(rateCents / 100).toFixed(3)} / mi</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Ledger Transactions</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${txForTaxYear.length}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Trips</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${mileageForTaxYear.length}</td></tr>
+          </tbody>
         </table>
-        <div style="margin-top: 16px; font-size: 12px; color:#666;">
-          Generated ${new Date().toLocaleString()} — For planning only. Review with your tax professional.
+
+        <div style="margin-top: 18px; font-size: 12px; color:#6b7280; line-height:1.5;">
+          For planning only. Review this summary with your tax professional before filing.
         </div>
       </div>
     `;
+
     document.body.appendChild(wrapper);
+
     try {
-      await (html2pdf() as any).from(wrapper).set({ filename: `MONIEZI_TaxSummary_${taxPrepYear}.pdf`, margin: 10, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 } }).save();
+      await new Promise(resolve => requestAnimationFrame(() => resolve(true)));
+
+      const element = wrapper.firstElementChild as HTMLElement | null;
+      if (!element) throw new Error('Tax summary element not found');
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: element.scrollWidth || 794,
+          windowHeight: element.scrollHeight || 1123
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'avoid-all' }
+      };
+
+      await html2pdf().set(opt).from(element).save();
       showToast(`Exported Tax Summary PDF for ${taxPrepYear}`, 'success');
     } catch (e) {
-      console.error(e);
+      console.error('Tax summary PDF export failed:', e);
       showToast('Failed to export Tax Summary PDF.', 'error');
     } finally {
-      document.body.removeChild(wrapper);
+      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
     }
   };
 

@@ -8286,7 +8286,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
         )}
 
         {/* Pro P&L Preview Modal - OUTSIDE Reports conditional for proper rendering */}
-        {showProPLPreview && createPortal(
+        {showProPLPreview && typeof document !== 'undefined' && document.body && createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-stretch justify-stretch p-0 modal-overlay" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             <div className="bg-gray-100 w-full h-full overflow-hidden flex flex-col overscroll-contain">
               {/* Modal Header */}
@@ -8577,7 +8577,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* ==================== CLIENTS PAGE ==================== */}

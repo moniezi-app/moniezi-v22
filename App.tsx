@@ -4340,33 +4340,40 @@ const demoMileageTrips: MileageTrip[] = [
     const currencySymbol = esc(String(settings.currencySymbol || '$'));
     const filename = `MONIEZI_TaxSummary_${taxPrepYear}.pdf`;
 
+    const pdfMarginMm = 10;
+    const a4WidthPx = Math.round((210 / 25.4) * 96);
+    const contentWidthPx = Math.floor(((210 - (pdfMarginMm * 2)) / 210) * a4WidthPx);
+    const contentPaddingPx = 28;
+
     const wrapper = document.createElement('div');
     wrapper.setAttribute('aria-hidden', 'true');
     wrapper.style.position = 'fixed';
     wrapper.style.left = '0';
     wrapper.style.top = '0';
-    wrapper.style.width = '794px';
-    wrapper.style.minHeight = '1123px';
+    wrapper.style.width = `${contentWidthPx}px`;
     wrapper.style.padding = '0';
     wrapper.style.margin = '0';
-    wrapper.style.opacity = '0.01';
     wrapper.style.pointerEvents = 'none';
     wrapper.style.zIndex = '-1';
     wrapper.style.background = '#ffffff';
-    wrapper.style.overflow = 'hidden';
+    wrapper.style.overflow = 'visible';
     wrapper.innerHTML = `
-      <div style="font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; width: 794px; min-height: 1123px; padding: 40px; color: #111827; background: #ffffff;">
+      <div style="font-family: Arial, Helvetica, sans-serif; box-sizing: border-box; width: ${contentWidthPx}px; padding: ${contentPaddingPx}px; color: #111827; background: #ffffff;">
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 24px;">
-          <div>
+          <div style="flex: 1 1 auto; min-width: 0;">
             <div style="font-size: 28px; font-weight: 700; margin: 0 0 8px 0;">MONIEZI</div>
             <div style="font-size: 22px; font-weight: 700; margin: 0 0 8px 0;">Tax Summary ${taxPrepYear}</div>
             <div style="font-size: 13px; color:#4b5563;">Business: ${businessName}</div>
             <div style="font-size: 13px; color:#4b5563; margin-top:4px;">Owner: ${ownerName}</div>
           </div>
-          <div style="text-align:right; font-size: 12px; color:#6b7280;">Generated ${esc(new Date().toLocaleString())}</div>
+          <div style="flex: 0 0 170px; max-width: 170px; text-align:right; font-size: 12px; color:#6b7280; line-height:1.4; word-break: break-word;">Generated ${esc(new Date().toLocaleString())}</div>
         </div>
 
-        <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+        <table style="width:100%; border-collapse: collapse; font-size: 14px; table-layout: fixed;">
+          <colgroup>
+            <col style="width: 62%;" />
+            <col style="width: 38%;" />
+          </colgroup>
           <thead>
             <tr>
               <th style="text-align:left; padding:12px; border:1px solid #d1d5db; background:#f3f4f6;">Category</th>
@@ -4374,14 +4381,14 @@ const demoMileageTrips: MileageTrip[] = [
             </tr>
           </thead>
           <tbody>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Income</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${income.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Expenses</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${expenses.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db; font-weight:700;">Net Profit</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; font-weight:700;">${currencySymbol}${net.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Miles</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${miles.toFixed(1)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Deduction</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${currencySymbol}${mileageDeduction.toFixed(2)}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Rate</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${(rateCents / 100).toFixed(3)} / mi</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Ledger Transactions</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${txForTaxYear.length}</td></tr>
-            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Trips</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right;">${mileageForTaxYear.length}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Income</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${income.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Total Expenses</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${expenses.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db; font-weight:700;">Net Profit</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; font-weight:700; white-space:nowrap;">${currencySymbol}${net.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Miles</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${miles.toFixed(1)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Deduction</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${currencySymbol}${mileageDeduction.toFixed(2)}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Rate</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${(rateCents / 100).toFixed(3)} / mi</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Ledger Transactions</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${txForTaxYear.length}</td></tr>
+            <tr><td style="padding:12px; border:1px solid #d1d5db;">Mileage Trips</td><td style="padding:12px; border:1px solid #d1d5db; text-align:right; white-space:nowrap;">${mileageForTaxYear.length}</td></tr>
           </tbody>
         </table>
 
@@ -4400,7 +4407,7 @@ const demoMileageTrips: MileageTrip[] = [
       if (!element) throw new Error('Tax summary element not found');
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [pdfMarginMm, pdfMarginMm, pdfMarginMm, pdfMarginMm],
         filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -4409,11 +4416,12 @@ const demoMileageTrips: MileageTrip[] = [
           backgroundColor: '#ffffff',
           scrollY: 0,
           scrollX: 0,
-          windowWidth: element.scrollWidth || 794,
-          windowHeight: element.scrollHeight || 1123
+          width: contentWidthPx,
+          windowWidth: contentWidthPx,
+          windowHeight: Math.ceil(element.scrollHeight)
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: 'avoid-all' }
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(element).save();

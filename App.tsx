@@ -4372,9 +4372,10 @@ const demoMileageTrips: MileageTrip[] = [
       .map(([name, stats]) => ({ name, ...stats }))
       .sort((a, b) => b.amount - a.amount);
 
-    const topExpenseRows = expenseCategories.slice(0, 8);
-    if (expenseCategories.length > 8) {
-      const remainder = expenseCategories.slice(8).reduce((acc, item) => {
+    const maxExpenseRows = 6;
+    const topExpenseRows = expenseCategories.slice(0, maxExpenseRows);
+    if (expenseCategories.length > maxExpenseRows) {
+      const remainder = expenseCategories.slice(maxExpenseRows).reduce((acc, item) => {
         acc.amount += item.amount;
         acc.count += item.count;
         acc.linked += item.linked;
@@ -4453,7 +4454,7 @@ const demoMileageTrips: MileageTrip[] = [
     const documentationRowsHtml = docRows.map(row => {
       const tone = progressTone(row.value);
       return `
-        <div class="progress-row">
+        <div class="progress-row no-split">
           <div class="progress-header">
             <div>
               <div class="progress-label">${esc(row.label)}</div>
@@ -4471,7 +4472,6 @@ const demoMileageTrips: MileageTrip[] = [
     const expenseRowsHtml = topExpenseRows.length
       ? topExpenseRows.map(item => {
           const share = totalExpenses > 0 ? (item.amount / totalExpenses) * 100 : 0;
-          const coverage = item.count > 0 ? (item.linked / item.count) * 100 : 0;
           return `
             <tr>
               <td>${esc(item.name)}</td>
@@ -4492,7 +4492,7 @@ const demoMileageTrips: MileageTrip[] = [
             <td class="num">${formatMoney(row.deduction)}</td>
           </tr>
         `).join('')
-      : '<tr><td colspan="4" class="empty-state">No mileage trips were recorded for this tax year.</td></tr>';
+      : '<tr class="mileage-empty-row"><td colspan="4" class="empty-state compact-empty">No mileage trips were recorded for this tax year.</td></tr>';
 
     const attentionHtml = attentionItems.map(item => `<li>${esc(item)}</li>`).join('');
 
@@ -4532,45 +4532,59 @@ const demoMileageTrips: MileageTrip[] = [
         .tax-page {
           width: ${contentWidthPx}px;
           min-height: ${contentHeightPx}px;
-          padding: 28px;
+          padding: 22px;
           background: #ffffff;
           position: relative;
+          display: flex;
+          flex-direction: column;
         }
         .tax-page + .tax-page {
           page-break-before: always;
         }
-        .brand-row {
+        .no-split, .section, .summary-card, .meta-chip, .mini-stat {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .brand-row,
+        .compact-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 16px;
-          margin-bottom: 20px;
+          gap: 14px;
+        }
+        .brand-row {
+          margin-bottom: 14px;
+        }
+        .compact-row {
+          margin-bottom: 12px;
         }
         .brand-kicker {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.18em;
           text-transform: uppercase;
           color: #2563eb;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .brand-title {
-          font-size: 32px;
+          font-size: 30px;
           font-weight: 800;
           letter-spacing: -0.03em;
           margin: 0;
+          line-height: 1;
         }
         .report-title {
-          font-size: 24px;
+          font-size: 22px;
           font-weight: 800;
           letter-spacing: -0.02em;
-          margin: 8px 0 8px;
+          margin: 8px 0 6px;
+          line-height: 1.15;
         }
         .report-subtitle {
-          font-size: 13px;
-          line-height: 1.55;
+          font-size: 12px;
+          line-height: 1.5;
           color: #475569;
-          max-width: 480px;
+          max-width: 470px;
         }
         .meta-chip-wrap {
           display: flex;
@@ -4586,88 +4600,93 @@ const demoMileageTrips: MileageTrip[] = [
           border-radius: 12px;
           padding: 10px 12px;
         }
+        .meta-chip.compact {
+          min-width: 116px;
+          padding: 9px 11px;
+        }
         .meta-label {
-          font-size: 10px;
+          font-size: 9px;
           text-transform: uppercase;
           letter-spacing: 0.16em;
           color: #64748b;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
           font-weight: 700;
         }
         .meta-value {
           font-size: 13px;
           color: #0f172a;
           font-weight: 700;
-          line-height: 1.35;
+          line-height: 1.32;
           overflow-wrap: anywhere;
         }
         .summary-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 12px;
-          margin: 18px 0 20px;
+          gap: 10px;
+          margin: 12px 0 14px;
         }
         .summary-card {
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 14px;
+          padding: 12px;
           background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         }
         .summary-label {
-          font-size: 10px;
+          font-size: 9px;
           text-transform: uppercase;
-          letter-spacing: 0.16em;
+          letter-spacing: 0.15em;
           color: #64748b;
           font-weight: 700;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .summary-value {
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 800;
           letter-spacing: -0.02em;
           color: #0f172a;
-          line-height: 1.1;
+          line-height: 1.08;
           white-space: nowrap;
         }
         .summary-detail {
-          font-size: 11px;
-          line-height: 1.45;
+          font-size: 10.5px;
+          line-height: 1.4;
           color: #64748b;
-          margin-top: 8px;
+          margin-top: 7px;
         }
         .section {
           border: 1px solid #e2e8f0;
           border-radius: 18px;
           background: #ffffff;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           overflow: hidden;
         }
         .section-header {
-          padding: 14px 16px 12px;
+          padding: 12px 14px 10px;
           border-bottom: 1px solid #e2e8f0;
           background: #f8fafc;
         }
         .section-kicker {
-          font-size: 10px;
+          font-size: 9px;
           text-transform: uppercase;
           letter-spacing: 0.16em;
           color: #2563eb;
           font-weight: 700;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
         }
         .section-title {
-          font-size: 17px;
+          font-size: 16px;
           font-weight: 800;
           letter-spacing: -0.02em;
-          margin: 0 0 4px;
+          margin: 0 0 3px;
+          line-height: 1.2;
         }
         .section-subtitle {
-          font-size: 12px;
-          line-height: 1.5;
+          font-size: 11px;
+          line-height: 1.45;
           color: #475569;
         }
         .section-body {
-          padding: 16px;
+          padding: 12px 14px;
         }
         table.report-table {
           width: 100%;
@@ -4677,15 +4696,15 @@ const demoMileageTrips: MileageTrip[] = [
         table.report-table th,
         table.report-table td {
           border-bottom: 1px solid #e2e8f0;
-          padding: 11px 12px;
-          font-size: 13px;
+          padding: 9px 10px;
+          font-size: 12px;
           vertical-align: top;
           overflow-wrap: anywhere;
         }
         table.report-table th {
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.1em;
           color: #64748b;
           text-align: left;
           background: #f8fafc;
@@ -4699,15 +4718,19 @@ const demoMileageTrips: MileageTrip[] = [
         table.report-table tr:last-child td {
           border-bottom: none;
         }
+        .mileage-table th {
+          font-size: 9px;
+          letter-spacing: 0.05em;
+        }
         .snapshot-key {
           color: #334155;
           font-weight: 700;
         }
         .snapshot-note {
           color: #64748b;
-          font-size: 11px;
-          margin-top: 4px;
-          line-height: 1.45;
+          font-size: 10px;
+          margin-top: 3px;
+          line-height: 1.35;
         }
         .emphasis-row td {
           font-weight: 800;
@@ -4715,36 +4738,36 @@ const demoMileageTrips: MileageTrip[] = [
           background: #eff6ff;
         }
         .progress-row + .progress-row {
-          margin-top: 14px;
+          margin-top: 12px;
         }
         .progress-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 8px;
+          gap: 10px;
+          margin-bottom: 6px;
         }
         .progress-label {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           color: #0f172a;
-          margin-bottom: 3px;
+          margin-bottom: 2px;
         }
         .progress-detail {
-          font-size: 11px;
-          line-height: 1.45;
+          font-size: 10px;
+          line-height: 1.35;
           color: #64748b;
         }
         .progress-pill {
-          padding: 6px 10px;
+          padding: 5px 9px;
           border-radius: 999px;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
           white-space: nowrap;
         }
         .progress-track {
           width: 100%;
-          height: 10px;
+          height: 8px;
           border-radius: 999px;
           overflow: hidden;
         }
@@ -4752,75 +4775,100 @@ const demoMileageTrips: MileageTrip[] = [
           height: 100%;
           border-radius: 999px;
         }
-        .coverage-grid {
+        .mini-stat-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
+          gap: 10px;
+          margin-top: 12px;
         }
-        .coverage-card {
+        .mini-stat {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
-          padding: 13px;
+          padding: 11px 12px;
           background: #f8fafc;
         }
-        .coverage-card-label {
-          font-size: 10px;
+        .mini-stat-label {
+          font-size: 9px;
           text-transform: uppercase;
           letter-spacing: 0.14em;
           color: #64748b;
           font-weight: 700;
           margin-bottom: 8px;
         }
-        .coverage-card-value {
-          font-size: 24px;
+        .mini-stat-value {
+          font-size: 22px;
           font-weight: 800;
           letter-spacing: -0.02em;
           color: #0f172a;
+          line-height: 1;
         }
-        .coverage-card-note {
-          font-size: 11px;
-          line-height: 1.45;
+        .mini-stat-note {
+          font-size: 10px;
+          line-height: 1.38;
           color: #64748b;
           margin-top: 6px;
         }
         .split-grid {
           display: grid;
-          grid-template-columns: 1.4fr 1fr;
-          gap: 16px;
+          grid-template-columns: 1.35fr 1fr;
+          gap: 14px;
+          align-items: start;
         }
         .attention-list {
           margin: 0;
           padding-left: 18px;
         }
         .attention-list li {
-          margin-bottom: 10px;
-          font-size: 12px;
+          margin-bottom: 9px;
+          font-size: 11px;
           line-height: 1.5;
           color: #334155;
         }
         .attention-list li:last-child {
           margin-bottom: 0;
         }
-        .footer-note {
+        .closing-note {
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          background: #f8fafc;
+          padding: 14px 16px;
+          margin-top: 12px;
+        }
+        .closing-note-title {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #2563eb;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .closing-note-body {
+          font-size: 11px;
+          line-height: 1.55;
+          color: #475569;
+        }
+        .page-footer {
+          margin-top: auto;
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-top: 16px;
           padding-top: 12px;
           border-top: 1px solid #e2e8f0;
-          font-size: 11px;
+          font-size: 10.5px;
           line-height: 1.45;
           color: #64748b;
         }
-        .footer-note strong {
+        .page-footer strong {
           color: #0f172a;
         }
         .empty-state {
           text-align: left;
           color: #64748b;
           font-style: italic;
-          padding: 16px 12px !important;
+        }
+        .compact-empty {
+          padding: 12px 10px !important;
         }
       </style>
       <div class="tax-export-root">
@@ -4890,12 +4938,12 @@ const demoMileageTrips: MileageTrip[] = [
             </div>
             <div class="summary-card">
               <div class="summary-label">Top Expense Category</div>
-              <div class="summary-value" style="font-size:18px; white-space:normal; line-height:1.2;">${esc(topExpenseCategory?.name || 'No expenses recorded')}</div>
+              <div class="summary-value" style="font-size:17px; white-space:normal; line-height:1.15;">${esc(topExpenseCategory?.name || 'No expenses recorded')}</div>
               <div class="summary-detail">${topExpenseCategory ? `${formatMoney(topExpenseCategory.amount)} · ${formatPercent(totalExpenses > 0 ? (topExpenseCategory.amount / totalExpenses) * 100 : 0)} of expenses` : 'No deductible expense data available.'}</div>
             </div>
           </div>
 
-          <div class="section">
+          <div class="section no-split" style="margin-bottom:0;">
             <div class="section-header">
               <div class="section-kicker">Section 1</div>
               <div class="section-title">Tax-Ready Financial Snapshot</div>
@@ -4904,8 +4952,8 @@ const demoMileageTrips: MileageTrip[] = [
             <div class="section-body" style="padding:0;">
               <table class="report-table">
                 <colgroup>
-                  <col style="width:56%;" />
-                  <col style="width:44%;" />
+                  <col style="width:58%;" />
+                  <col style="width:42%;" />
                 </colgroup>
                 <tbody>
                   <tr>
@@ -4961,8 +5009,28 @@ const demoMileageTrips: MileageTrip[] = [
               </table>
             </div>
           </div>
+        </div>
 
-          <div class="section">
+        <div class="tax-page">
+          <div class="compact-row">
+            <div>
+              <div class="brand-kicker">MONIEZI Tax Prep Package</div>
+              <div class="report-title" style="margin-top:0;">Documentation Status & Expense Breakdown</div>
+              <div class="report-subtitle">A fixed summary page showing record completeness plus the highest-impact deduction categories for the year.</div>
+            </div>
+            <div class="meta-chip-wrap" style="max-width:244px;">
+              <div class="meta-chip compact">
+                <div class="meta-label">Tax Year</div>
+                <div class="meta-value">${esc(String(taxPrepYear))}</div>
+              </div>
+              <div class="meta-chip compact">
+                <div class="meta-label">Expense Categories</div>
+                <div class="meta-value">${formatNumber(uniqueExpenseCategories.length)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section no-split">
             <div class="section-header">
               <div class="section-kicker">Section 2</div>
               <div class="section-title">Audit Readiness & Documentation Status</div>
@@ -4970,53 +5038,27 @@ const demoMileageTrips: MileageTrip[] = [
             </div>
             <div class="section-body">
               ${documentationRowsHtml}
-            </div>
-          </div>
-
-          <div class="coverage-grid">
-            <div class="coverage-card">
-              <div class="coverage-card-label">Package Coverage</div>
-              <div class="coverage-card-value">${formatNumber(txForTaxYear.length)}</div>
-              <div class="coverage-card-note">Total ledger transactions included in this tax-prep package export.</div>
-            </div>
-            <div class="coverage-card">
-              <div class="coverage-card-label">Items Requiring Attention</div>
-              <div class="coverage-card-value">${formatNumber(missingReceiptCount + pendingReviewCount + uncategorizedCount + incompleteMileageCount)}</div>
-              <div class="coverage-card-note">Combined open items across receipts, review status, categorization, and mileage completeness.</div>
-            </div>
-            <div class="coverage-card">
-              <div class="coverage-card-label">Prepared Privately</div>
-              <div class="coverage-card-value">100%</div>
-              <div class="coverage-card-note">Generated directly from your MONIEZI records for local export and review.</div>
-            </div>
-          </div>
-
-          <div class="footer-note">
-            <div><strong>Prepared with MONIEZI Pro Finance.</strong> This summary is designed to help organize year-end records before filing.</div>
-            <div>Review final tax treatment with your CPA or tax professional.</div>
-          </div>
-        </div>
-
-        <div class="tax-page">
-          <div class="brand-row" style="margin-bottom:16px;">
-            <div>
-              <div class="brand-kicker">MONIEZI Tax Prep Package</div>
-              <div class="report-title" style="margin-top:0;">Detailed Breakdown & Filing Checks</div>
-              <div class="report-subtitle">The sections below show where expenses were concentrated, how mileage was logged, and what should be cleaned up before filing.</div>
-            </div>
-            <div class="meta-chip-wrap" style="max-width:240px;">
-              <div class="meta-chip" style="min-width: 112px;">
-                <div class="meta-label">Tax Year</div>
-                <div class="meta-value">${esc(String(taxPrepYear))}</div>
-              </div>
-              <div class="meta-chip" style="min-width: 112px;">
-                <div class="meta-label">Expense Categories</div>
-                <div class="meta-value">${formatNumber(uniqueExpenseCategories.length)}</div>
+              <div class="mini-stat-grid">
+                <div class="mini-stat">
+                  <div class="mini-stat-label">Package Coverage</div>
+                  <div class="mini-stat-value">${formatNumber(txForTaxYear.length)}</div>
+                  <div class="mini-stat-note">Total ledger transactions included in this tax-prep package export.</div>
+                </div>
+                <div class="mini-stat">
+                  <div class="mini-stat-label">Items Requiring Attention</div>
+                  <div class="mini-stat-value">${formatNumber(missingReceiptCount + pendingReviewCount + uncategorizedCount + incompleteMileageCount)}</div>
+                  <div class="mini-stat-note">Headline open items across receipts, review status, categorization, and mileage completeness.</div>
+                </div>
+                <div class="mini-stat">
+                  <div class="mini-stat-label">Prepared Privately</div>
+                  <div class="mini-stat-value">100%</div>
+                  <div class="mini-stat-note">Generated directly from your MONIEZI records for local export and review.</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="section">
+          <div class="section no-split" style="margin-bottom:0;">
             <div class="section-header">
               <div class="section-kicker">Section 3</div>
               <div class="section-title">Deductible Expense Breakdown</div>
@@ -5044,21 +5086,37 @@ const demoMileageTrips: MileageTrip[] = [
               </table>
             </div>
           </div>
+        </div>
+
+        <div class="tax-page">
+          <div class="compact-row">
+            <div>
+              <div class="brand-kicker">MONIEZI Tax Prep Package</div>
+              <div class="report-title" style="margin-top:0;">Mileage & Filing Checks</div>
+              <div class="report-subtitle">A compact closing page focused on quarter-level mileage totals, filing cleanup items, and final handoff guidance.</div>
+            </div>
+            <div class="meta-chip-wrap" style="max-width:244px;">
+              <div class="meta-chip compact">
+                <div class="meta-label">Reporting Period</div>
+                <div class="meta-value">${formatDate(reportingStart)} – ${formatDate(reportingEnd)}</div>
+              </div>
+            </div>
+          </div>
 
           <div class="split-grid">
-            <div class="section" style="margin-bottom:0;">
+            <div class="section no-split" style="margin-bottom:0;">
               <div class="section-header">
                 <div class="section-kicker">Section 4</div>
                 <div class="section-title">Mileage Log Summary</div>
                 <div class="section-subtitle">Quarter-by-quarter view of recorded trips, miles, and estimated deduction.</div>
               </div>
               <div class="section-body" style="padding:0;">
-                <table class="report-table">
+                <table class="report-table mileage-table">
                   <colgroup>
-                    <col style="width:22%;" />
-                    <col style="width:18%;" />
-                    <col style="width:28%;" />
-                    <col style="width:32%;" />
+                    <col style="width:24%;" />
+                    <col style="width:16%;" />
+                    <col style="width:26%;" />
+                    <col style="width:34%;" />
                   </colgroup>
                   <thead>
                     <tr>
@@ -5075,7 +5133,7 @@ const demoMileageTrips: MileageTrip[] = [
               </div>
             </div>
 
-            <div class="section" style="margin-bottom:0;">
+            <div class="section no-split" style="margin-bottom:0;">
               <div class="section-header">
                 <div class="section-kicker">Section 5</div>
                 <div class="section-title">Attention Items Before Filing</div>
@@ -5089,20 +5147,14 @@ const demoMileageTrips: MileageTrip[] = [
             </div>
           </div>
 
-          <div class="section" style="margin-top:16px; margin-bottom:0;">
-            <div class="section-header">
-              <div class="section-kicker">Section 6</div>
-              <div class="section-title">Pre-Filing Note</div>
-              <div class="section-subtitle">Use this package as a premium handoff document for planning, bookkeeping review, and tax-prep discussion.</div>
-            </div>
-            <div class="section-body">
-              <div style="font-size:12px; line-height:1.65; color:#475569;">
-                MONIEZI organized this package from your recorded ledger entries, linked receipt attachments, and mileage logs for the selected tax year. The totals here are designed to make the value of your records immediately clear: what you earned, what you spent, how well expenses are documented, and what should be addressed before filing. Final tax treatment, classification decisions, and any required adjustments should still be reviewed with your tax professional.
-              </div>
+          <div class="closing-note no-split">
+            <div class="closing-note-title">Pre-Filing Note</div>
+            <div class="closing-note-body">
+              MONIEZI organized this package from your recorded ledger entries, linked receipt attachments, and mileage logs for the selected tax year. The totals here are designed to make the value of your records immediately clear: what you earned, what you spent, how well expenses are documented, and what should be addressed before filing. Final tax treatment, classification decisions, and any required adjustments should still be reviewed with your tax professional.
             </div>
           </div>
 
-          <div class="footer-note">
+          <div class="page-footer">
             <div><strong>MONIEZI Pro Finance</strong> · Generated privately from your local business records.</div>
             <div>${esc(String(settings.businessName || 'Business'))} · Tax Year ${esc(String(taxPrepYear))}</div>
           </div>
@@ -5133,7 +5185,7 @@ const demoMileageTrips: MileageTrip[] = [
           windowHeight: Math.ceil(element.scrollHeight)
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['css'] }
       };
 
       await html2pdf().set(opt).from(element).save();
